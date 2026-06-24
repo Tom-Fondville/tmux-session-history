@@ -12,9 +12,6 @@ fn main() {
         exit(0)
     }
 
-    let history = History::get();
-    let Ok(mut history) = history else { exit(1) };
-
     let first_arg = args.first().cloned().unwrap_or("".to_string());
     match first_arg.as_str() {
         "--new" => {
@@ -23,10 +20,57 @@ fn main() {
                 exit(1)
             };
 
+            let history = History::get();
+            let mut history = match history {
+                Ok(history) => history,
+                Err(e) => {
+                    eprintln!("could not get history: {}", e);
+                    exit(1)
+                }
+            };
             history.open_new_session(second_arg.to_string());
+            if let Some(current_session) = history.current_session.as_ref() {
+                print!("{}", current_session);
+            }
+            let result = history.save();
+            match result {
+                Ok(_) => exit(0),
+                Err(e) => {
+                    eprintln!("could not save history: {}", e);
+                    exit(1)
+                }
+            }
         }
-        "--next" => history.open_next_session(),
-        "--last" => history.open_last_session(),
+        "--next" => {
+            let history = History::get();
+            let mut history = match history {
+                Ok(history) => history,
+                Err(e) => {
+                    eprintln!("could not get history: {}", e);
+                    exit(1)
+                }
+            };
+            history.open_next_session();
+            if let Some(current_session) = history.current_session.as_ref() {
+                print!("{}", current_session);
+            }
+            _ = history.save();
+        }
+        "--last" => {
+            let history = History::get();
+            let mut history = match history {
+                Ok(history) => history,
+                Err(e) => {
+                    eprintln!("could not get history: {}", e);
+                    exit(1)
+                }
+            };
+            history.open_last_session();
+            if let Some(current_session) = history.current_session.as_ref() {
+                print!("{}", current_session);
+            }
+            _ = history.save();
+        }
         "--help" => {
             println!("Usage:");
             println!("  --new <string>");
@@ -35,21 +79,4 @@ fn main() {
         }
         _ => (),
     }
-    _ = history.save();
-
-    // let history = History::get();
-    // let Ok(mut history) = history else { exit(1) };
-    // println!("{:?}", history);
-    //
-    // history.open_new_session("ma nouvelle".to_string());
-    // println!("{:?}", history);
-    //
-    // history.open_last_session();
-    // println!("{:?}", history);
-    //
-    // history.open_last_session();
-    // println!("{:?}", history);
-    //
-    // history.open_next_session();
-    // println!("{:?}", history);
 }
