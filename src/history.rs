@@ -1,5 +1,5 @@
 use std::{
-    fs::File,
+    fs::{File, OpenOptions},
     io::{BufRead, BufReader, Error, Seek, SeekFrom, Write},
 };
 
@@ -56,15 +56,17 @@ pub fn parse_history_from_file(file: File) -> Result<History, String> {
 }
 
 fn get_history_file() -> Result<File, Error> {
-    let config_dir = dirs::config_dir().expect("cannot find config directory");
+    let config_dir = dirs::home_dir()
+        .expect("cannot find home directory")
+        .join(".config");
+    std::fs::create_dir_all(&config_dir)?;
     let path = config_dir.join(FILE_NAME);
 
-    if !path.exists() {
-        println!("on crée le fichier");
-        return File::create(&path);
-    }
-
-    File::open(&path)
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&path)
 }
 
 #[derive(Debug)]
@@ -110,8 +112,6 @@ impl History {
         content.push('\n');
         content.push_str(self.next_sessions.join(",").as_str());
         content.push('\n');
-
-        println!("content: {}", content);
 
         file.set_len(0)?;
         file.seek(SeekFrom::Start(0))?;
