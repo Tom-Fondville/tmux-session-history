@@ -135,6 +135,9 @@ impl History {
             Some(last) => {
                 if let Some(current) = &self.current_session {
                     self.next_sessions.insert(0, current.clone());
+                    if self.next_sessions.len() > 20 {
+                        self.next_sessions.pop();
+                    }
                 }
                 self.current_session = Some(last.to_string());
                 self.last_sessions.pop();
@@ -149,6 +152,9 @@ impl History {
             Some(next) => {
                 if let Some(current) = &self.current_session {
                     self.last_sessions.push(current.clone());
+                    if self.last_sessions.len() > 20 {
+                        self.last_sessions.remove(0);
+                    }
                 }
 
                 self.current_session = Some(next.to_string());
