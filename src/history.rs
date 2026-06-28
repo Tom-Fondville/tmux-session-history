@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     fs::{File, OpenOptions},
     io::{BufRead, BufReader, Error, Seek, SeekFrom, Write},
 };
@@ -74,6 +75,30 @@ pub struct History {
     pub last_sessions: Vec<String>,
     pub current_session: Option<String>,
     pub next_sessions: Vec<String>,
+}
+impl Display for History {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let last_sesions: String = self
+            .last_sessions
+            .iter()
+            .fold(String::new(), |acc, session| {
+                if acc.is_empty() {
+                    return session.to_string();
+                }
+                format!("{}, {}", acc, session)
+            });
+        let current_session: String = self.current_session.clone().unwrap_or_default();
+        let next_sesions: String = self
+            .next_sessions
+            .iter()
+            .fold(String::new(), |acc, session| {
+                if acc.is_empty() {
+                    return session.to_string();
+                }
+                format!("{}, {}", acc, session)
+            });
+        write!(f, "{}\n{}\n{}", last_sesions, current_session, next_sesions)
+    }
 }
 
 impl History {

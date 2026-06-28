@@ -14,6 +14,19 @@ fn main() {
 
     let first_arg = args.first().cloned().unwrap_or("".to_string());
     match first_arg.as_str() {
+        "--get" => {
+            let history = History::get();
+            let history = match history {
+                Ok(history) => history,
+                Err(e) => {
+                    eprintln!("could not get history: {}", e);
+                    exit(1)
+                }
+            };
+
+            print!("{}", history);
+            exit(0)
+        }
         "--new" => {
             let Some(second_arg) = args.get(1) else {
                 println!("session name must be provided when using --new");
