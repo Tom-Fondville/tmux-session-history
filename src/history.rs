@@ -147,6 +147,12 @@ impl History {
     }
 
     pub fn open_new_session(&mut self, session: String) {
+        if let Some(current) = &self.current_session
+            && *current == session
+        {
+            return;
+        }
+
         if let Some(current) = &self.current_session {
             self.last_sessions.push(current.clone());
         }

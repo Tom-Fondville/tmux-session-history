@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 dirs = "6.0.0"
 io = "0.0.2"
+color-eyre = "0.6.5"
+ratatui = "0.30.2"
+crossterm = "0.29.0"
