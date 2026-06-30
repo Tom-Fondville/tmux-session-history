@@ -113,6 +113,7 @@ fn main() {
             if let Some(name) = chosen {
                 print!("{}", name);
             }
+            //TODO: reorder the history
         }
         "--get" => {
             let history = History::get();
