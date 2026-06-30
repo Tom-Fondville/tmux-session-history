@@ -1,10 +1,13 @@
-use std::{env, process::exit};
+use std::{env, io, process::exit};
 
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
-    crossterm, init,
-    layout::{Constraint, Layout},
-    restore,
+    Terminal, crossterm,
+    crossterm::{
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    },
+    prelude::CrosstermBackend,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, List, ListItem, ListState, StatefulWidget},
 };
@@ -38,23 +41,32 @@ fn main() {
                 Err(_) => exit(1),
             }
 
-            let mut terminal = init();
+            if enable_raw_mode().is_err() || execute!(io::stderr(), EnterAlternateScreen).is_err() {
+                exit(1)
+            }
+            let mut terminal = match Terminal::new(CrosstermBackend::new(io::stderr())) {
+                Ok(terminal) => terminal,
+                Err(_) => {
+                    let _ = disable_raw_mode();
+                    let _ = execute!(io::stderr(), LeaveAlternateScreen);
+                    exit(1)
+                }
+            };
+
+            let mut all_sessions: Vec<String> = history.last_sessions.clone();
+            if let Some(current_session) = history.current_session.clone() {
+                all_sessions.push(current_session);
+            }
+            all_sessions.extend(history.next_sessions.clone());
+
             let state = &mut ListState::default();
             state.select(Some(history.last_sessions.len()));
+            let mut chosen: Option<String> = history.current_session;
 
             loop {
                 _ = terminal.draw(|frame| {
-                    frame.render_widget("toto", frame.area());
-                    let mut sessions_items = Vec::<ListItem>::new();
-                    for last_session in history.last_sessions.clone() {
-                        sessions_items.push(ListItem::new(last_session));
-                    }
-                    if let Some(current_session) = history.current_session.clone() {
-                        sessions_items.push(ListItem::new(current_session));
-                    }
-                    for next_session in history.next_sessions.clone() {
-                        sessions_items.push(ListItem::new(next_session));
-                    }
+                    let sessions_items: Vec<ListItem> =
+                        all_sessions.iter().cloned().map(ListItem::new).collect();
 
                     let list = List::new(sessions_items)
                         .block(
@@ -78,9 +90,8 @@ fn main() {
                     Event::FocusLost => (),
                     Event::Key(key) => match key.code {
                         KeyCode::Enter => {
-                            // let index = state.selected().unwrap_or_default();
-                            // print!(selected);
-                            print!("toto");
+                            chosen = state.selected().and_then(|i| all_sessions.get(i).cloned());
+                            break;
                         }
                         KeyCode::Char(char) => match char {
                             'q' => break,
@@ -96,7 +107,12 @@ fn main() {
                 };
             }
 
-            restore();
+            let _ = disable_raw_mode();
+            let _ = execute!(io::stderr(), LeaveAlternateScreen);
+
+            if let Some(name) = chosen {
+                print!("{}", name);
+            }
         }
         "--get" => {
             let history = History::get();
