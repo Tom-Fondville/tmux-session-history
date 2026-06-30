@@ -70,14 +70,12 @@ fn main() {
 
                     let list = List::new(sessions_items)
                         .block(
-                            Block::default()
-                                .title("Select session")
-                                .borders(Borders::ALL),
+                            Block::default().title("Select session"), // .borders(Borders::ALL),
                         )
                         .highlight_style(
                             Style::default()
                                 .bg(Color::Blue)
-                                .fg(Color::White)
+                                .fg(Color::Black)
                                 .add_modifier(Modifier::BOLD),
                         )
                         .highlight_symbol("▶ ");
