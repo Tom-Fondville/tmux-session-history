@@ -28,7 +28,7 @@ fn main() {
     match first_arg.as_str() {
         "--ui" => {
             let history = History::get();
-            let history = match history {
+            let mut history = match history {
                 Ok(history) => history,
                 Err(e) => {
                     eprintln!("could not get history: {}", e);
@@ -61,7 +61,7 @@ fn main() {
 
             let state = &mut ListState::default();
             state.select(Some(history.last_sessions.len()));
-            let mut chosen: Option<String> = history.current_session;
+            let mut chosen_session: Option<String> = history.current_session.clone();
 
             loop {
                 _ = terminal.draw(|frame| {
@@ -69,9 +69,7 @@ fn main() {
                         all_sessions.iter().cloned().map(ListItem::new).collect();
 
                     let list = List::new(sessions_items)
-                        .block(
-                            Block::default().title("Select session"), // .borders(Borders::ALL),
-                        )
+                        .block(Block::default().title("Select session"))
                         .highlight_style(
                             Style::default()
                                 .bg(Color::Blue)
@@ -88,7 +86,8 @@ fn main() {
                     Event::FocusLost => (),
                     Event::Key(key) => match key.code {
                         KeyCode::Enter => {
-                            chosen = state.selected().and_then(|i| all_sessions.get(i).cloned());
+                            chosen_session =
+                                state.selected().and_then(|i| all_sessions.get(i).cloned());
                             break;
                         }
                         KeyCode::Char(char) => match char {
@@ -108,10 +107,19 @@ fn main() {
             let _ = disable_raw_mode();
             let _ = execute!(io::stderr(), LeaveAlternateScreen);
 
-            if let Some(name) = chosen {
-                print!("{}", name);
+            if let Some(session) = chosen_session {
+                print!("{}", session);
+                history.open_session(session);
             }
-            //TODO: reorder the history
+
+            let result = history.save();
+            match result {
+                Ok(_) => exit(0),
+                Err(e) => {
+                    eprintln!("could not save history: {}", e);
+                    exit(1)
+                }
+            }
         }
         "--get" => {
             let history = History::get();
@@ -140,7 +148,7 @@ fn main() {
                     exit(1)
                 }
             };
-            history.open_new_session(second_arg.to_string());
+            history.open_session(second_arg.to_string());
             if let Some(current_session) = history.current_session.as_ref() {
                 print!("{}", current_session);
             }

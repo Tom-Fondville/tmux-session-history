@@ -146,7 +146,7 @@ impl History {
         Ok(())
     }
 
-    pub fn open_new_session(&mut self, session: String) {
+    pub fn open_session(&mut self, session: String) {
         if let Some(current) = &self.current_session
             && *current == session
         {
@@ -154,8 +154,33 @@ impl History {
         }
 
         if let Some(current) = &self.current_session {
+            if let Some(index) = self
+                .last_sessions
+                .iter()
+                .position(|last_session| *last_session == current.clone())
+            {
+                self.last_sessions.remove(index);
+            }
+
             self.last_sessions.push(current.clone());
         }
+
+        if let Some(index) = self
+            .last_sessions
+            .iter()
+            .position(|last_session| *last_session == session)
+        {
+            self.last_sessions.remove(index);
+        }
+
+        if let Some(index) = self
+            .next_sessions
+            .iter()
+            .position(|next_session| *next_session == session)
+        {
+            self.next_sessions.remove(index);
+        }
+
         self.current_session = Some(session);
     }
 
