@@ -112,6 +112,9 @@ fn main() {
                 history.open_session(session);
             }
 
+            if let Some(current_session) = history.current_session.as_ref() {
+                print!("{}", current_session);
+            }
             let result = history.save();
             match result {
                 Ok(_) => exit(0),
